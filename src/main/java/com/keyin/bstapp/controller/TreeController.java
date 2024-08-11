@@ -1,5 +1,7 @@
 package com.keyin.bstapp.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.keyin.bstapp.entity.TreeEntity;
 import com.keyin.bstapp.service.TreeService;
 import com.keyin.bstapp.trees.BinaryNode;
@@ -22,17 +24,28 @@ public class TreeController {
     }
 
     @PostMapping("/process-numbers")
-    public String processNumbers(@RequestParam("numbers") String numbers, Model model) {
+    public String processNumbers(@RequestParam String numbers, Model model) {
         BinaryNode tree = treeService.createBinarySearchTree(numbers);
         treeService.saveTree(numbers, tree);
-        model.addAttribute("tree", tree);
-        return "tree-view";  // Assuming you have a template to visualize the tree
+
+        // Serialize the tree to pretty-printed JSON
+        ObjectMapper objectMapper = new ObjectMapper();
+        String treeJson = "";
+        try {
+            treeJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(tree);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        model.addAttribute("tree", treeJson);
+        return "tree-view";  // Ensure you have a corresponding template
     }
 
     @GetMapping("/previous-trees")
     public String showPreviousTrees(Model model) {
+        // Retrieve previous trees from the database
         List<TreeEntity> previousTrees = treeService.getPreviousTrees();
         model.addAttribute("previousTrees", previousTrees);
-        return "previous-trees";
+        return "previous-trees";  // Ensure you have a corresponding template
     }
 }

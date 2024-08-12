@@ -77,13 +77,15 @@ To run the application:
 Navigate to the backend directory.
 
 ## Use the following command:
-```mvn spring-boot:run
+```
+mvn spring-boot:run
 ```
 The application will start on http://localhost:8080.
 
 ## Testing
 Unit tests are provided to ensure the application works as expected. To run the tests:
-```mvn test
+```
+mvn test
 ```
 
 

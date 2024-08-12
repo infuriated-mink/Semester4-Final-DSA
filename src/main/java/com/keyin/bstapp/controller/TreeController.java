@@ -6,46 +6,62 @@ import com.keyin.bstapp.entity.TreeEntity;
 import com.keyin.bstapp.service.TreeService;
 import com.keyin.bstapp.trees.BinaryNode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Controller
+@RestController
 public class TreeController {
 
     @Autowired
     private TreeService treeService;
 
-    @GetMapping("/enter-numbers")
-    public String showEnterNumbersPage() {
-        return "enter-numbers";
-    }
-
     @PostMapping("/process-numbers")
-    public String processNumbers(@RequestParam String numbers, Model model) {
-        BinaryNode tree = treeService.createBinarySearchTree(numbers);
-        treeService.saveTree(numbers, tree);
+    public ResponseEntity<String> processNumbers(@RequestParam String numbers) {
+        System.out.println("Received numbers: " + numbers); // Log the input
 
-        // Serialize the tree to pretty-printed JSON
-        ObjectMapper objectMapper = new ObjectMapper();
-        String treeJson = "";
         try {
-            treeJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(tree);
+            // Check if the input is empty
+            if (numbers == null || numbers.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Input numbers cannot be null or empty.");
+            }
+
+            // Create binary search tree
+            BinaryNode tree = treeService.createBinarySearchTree(numbers);
+
+            // Save tree to database
+            treeService.saveTree(numbers, tree);
+
+            // Convert tree to JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            String treeJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(tree);
+
+            return ResponseEntity.ok(treeJson);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing numbers: JSON processing error - " + e.getMessage());
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Error processing numbers: Invalid number format - " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing numbers: " + e.getMessage());
         }
-
-        model.addAttribute("tree", treeJson);
-        return "tree-view";  // Ensure you have a corresponding template
     }
 
     @GetMapping("/previous-trees")
-    public String showPreviousTrees(Model model) {
-        // Retrieve previous trees from the database
-        List<TreeEntity> previousTrees = treeService.getPreviousTrees();
-        model.addAttribute("previousTrees", previousTrees);
-        return "previous-trees";  // Ensure you have a corresponding template
+    public ResponseEntity<?> showPreviousTrees() {
+        try {
+            List<TreeEntity> previousTrees = treeService.getPreviousTrees();
+            return ResponseEntity.ok(previousTrees);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving previous trees: " + e.getMessage());
+        }
     }
 }

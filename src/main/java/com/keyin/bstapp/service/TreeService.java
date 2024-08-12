@@ -6,6 +6,7 @@ import com.keyin.bstapp.trees.BinaryNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -45,5 +46,39 @@ public class TreeService {
             root.setRightChild(insertIntoBST(root.getRightChild(), value));
         }
         return root;
+    }
+
+    // Additional method to balance the BST
+    public BinaryNode balanceBST(BinaryNode root) {
+        List<Integer> sortedList = inOrderTraversal(root);
+        return buildBalancedBST(sortedList, 0, sortedList.size() - 1);
+    }
+
+    private List<Integer> inOrderTraversal(BinaryNode node) {
+        List<Integer> result = new ArrayList<>();
+        inOrderTraversalHelper(node, result);
+        return result;
+    }
+
+    private void inOrderTraversalHelper(BinaryNode node, List<Integer> result) {
+        if (node != null) {
+            inOrderTraversalHelper(node.getLeftChild(), result);
+            result.add(node.getValue());
+            inOrderTraversalHelper(node.getRightChild(), result);
+        }
+    }
+
+    private BinaryNode buildBalancedBST(List<Integer> sortedList, int start, int end) {
+        if (start > end) {
+            return null;
+        }
+
+        int mid = (start + end) / 2;
+        BinaryNode node = new BinaryNode(sortedList.get(mid));
+
+        node.setLeftChild(buildBalancedBST(sortedList, start, mid - 1));
+        node.setRightChild(buildBalancedBST(sortedList, mid + 1, end));
+
+        return node;
     }
 }
